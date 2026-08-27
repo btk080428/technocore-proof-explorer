@@ -1,4 +1,5 @@
 import { archiveRecord, DID_PATTERN, isPublicRoom, readArchive, sha256, type ProofRecord } from '@/db/archive';
+import { parseTechnocoreJson } from '@/lib/technocore-json';
 
 const TECHNOCORE = 'https://technocore.chat';
 type RoomSummary = { room?: unknown };
@@ -15,7 +16,7 @@ async function getText(url: string) {
 async function getJson(url: string) {
   const result = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
   if (!result.ok) throw new Error(`Technocore returned ${result.status}`);
-  return result.json() as Promise<Record<string, unknown>>;
+  return parseTechnocoreJson(await result.text());
 }
 
 export async function GET(request: Request) {
@@ -43,7 +44,17 @@ export async function GET(request: Request) {
 
     const activities = roomPayloads.flatMap(({ room, messages }) => messages
       .filter((message) => message.from === did && typeof message.text === 'string' && typeof message.seq === 'number')
-      .map((message) => ({ room, seq: message.seq as number, nonce: typeof message.nonce === 'number' ? String(message.nonce) : null, ts: typeof message.ts === 'string' ? message.ts : null, text: message.text as string })))
+      .map((message) => ({
+        room,
+        seq: message.seq as number,
+        nonce: typeof message.nonce === 'string'
+          ? message.nonce
+          : typeof message.nonce === 'number' && Number.isSafeInteger(message.nonce)
+            ? String(message.nonce)
+            : null,
+        ts: typeof message.ts === 'string' ? message.ts : null,
+        text: message.text as string,
+      })))
       .sort((a, b) => (b.ts || '').localeCompare(a.ts || '') || b.seq - a.seq);
 
     const artifactMap = new Map<string, { url: string; kind: 'github'; room: string; seq: number }>();
