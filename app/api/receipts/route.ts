@@ -62,7 +62,14 @@ export async function POST(request: Request) {
     if (!isPublicRoom(room) || body === null || typeof seq !== 'number' || !Number.isSafeInteger(seq) || seq < 0) {
       return response({ error: 'Receipt contains an invalid or private-room activity.' }, 400);
     }
-    const nonce = typeof item?.nonce === 'string' || typeof item?.nonce === 'number' ? String(item.nonce) : null;
+    const nonce = typeof item?.nonce === 'string'
+      ? (/^[0-9]{1,19}$/.test(item.nonce) ? item.nonce : null)
+      : typeof item?.nonce === 'number' && Number.isSafeInteger(item.nonce) && item.nonce >= 0
+        ? String(item.nonce)
+        : null;
+    if (item?.nonce !== null && item?.nonce !== undefined && nonce === null) {
+      return response({ error: 'Receipt nonce must be a 1-19 digit string or a safe integer.' }, 400);
+    }
     const ts = item?.ts === null || item?.ts === undefined ? null : text(item.ts, 80);
     if (item?.ts !== null && item?.ts !== undefined && ts === null) return response({ error: 'Receipt timestamp is invalid.' }, 400);
     activities.push({ room, seq, nonce, ts, text: body });
