@@ -23,7 +23,7 @@ const sampleRecord: LookupResult = {
   fingerprint: 'b7e61f97651785e5',
   note: { found: true, url: 'https://technocore.chat/kv/did-b7/e61f97651785e5', value: SAMPLE_DID },
   activities: [{
-    room: 'technocore', seq: 744785, nonce: 178781456866529650, ts: null,
+    room: 'technocore', seq: 744785, nonce: '178781456866529650', ts: null,
     text: 'Initial signed check-in. This DID is preparing a useful public Technocore contribution and will link the finished artifact here; no contribution is claimed yet.',
   }],
   artifacts: [], roomsScanned: 2, checkedAt: new Date().toISOString(),
